@@ -1,7 +1,6 @@
+const mintContractAddress = '0x223876ADC06fCD4B6D7C0423a5b857447D9Be915';
 
-const mintContractAddress = '0x223876ADC06fCD4B6D7C0423a5b857447D9Be915' ; 
-
-const mintABI = [[
+const mintABI = [
 	{
 		"inputs": [
 			{
@@ -328,4 +327,4 @@ const mintABI = [[
 		"stateMutability": "view",
 		"type": "function"
 	}
-]
+];
