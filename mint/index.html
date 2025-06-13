@@ -2,113 +2,72 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Peppermint Token Mint</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.0/ethers.umd.min.js" type="application/javascript"></script>
+  <script src="./mintABI.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
-      background-color: #f4f6f9;
+      background: #f9fafa;
+      color: #333;
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      height: 100vh;
+      justify-content: center;
+      min-height: 100vh;
       margin: 0;
     }
 
     .container {
-      background: #ffffff;
-      padding: 30px 40px;
+      background: #fff;
       border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-      width: 100%;
+      padding: 40px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       max-width: 400px;
+      width: 90%;
       text-align: center;
     }
 
     h1 {
-      font-size: 24px;
-      margin-bottom: 20px;
-      color: #222;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 600;
-      text-align: left;
-    }
-
-    input[type="number"] {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      margin-bottom: 20px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
+      color: #24a19c;
     }
 
     button {
-      padding: 12px 20px;
-      font-size: 16px;
-      background-color: #4CAF50;
+      background-color: #24a19c;
       color: white;
       border: none;
-      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border-radius: 6px;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      margin-top: 20px;
     }
 
     button:hover {
-      background-color: #3c9f45;
-    }
-
-    #walletInfo {
-      margin-top: 20px;
-      font-size: 14px;
-      text-align: left;
+      background-color: #1c8783;
     }
 
     #walletStatus {
-      display: block;
-      margin: 10px 0;
+      margin-top: 10px;
+      font-weight: 600;
     }
 
     #responseMessage {
       margin-top: 20px;
-      color: #0077cc;
-      font-weight: 600;
-    }
-
-    #walletButton {
-      margin-top: 10px;
-      background-color: #007bff;
-    }
-
-    #walletButton:hover {
-      background-color: #005ec2;
+      font-weight: 500;
+      color: #0066cc;
     }
   </style>
-
-  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.0/ethers.umd.min.js"></script>
-  <script src="./mintABI.js" type="text/javascript"></script>
 </head>
-
 <body onload="checkWallet()">
   <div class="container">
     <h1>Mint Peppermint Tokens</h1>
-    
-    <label for="tokenAmount">Token Amount</label>
-    <input type="number" id="tokenAmount" placeholder="Enter amount (e.g. 100)" min="1"/>
-
-    <button onclick="mintTokens()">Mint Tokens</button>
-
-    <section id="walletInfo">
-      <span id="walletStatus" style="color:red">Checking wallet status...</span>
-      <button onclick="checkWallet()" id="walletButton">Connect Wallet</button>
-    </section>
-
+    <p id="walletStatus">Checking wallet connection...</p>
+    <button id="walletButton" onclick="checkWallet()">Connect Wallet</button>
+    <button onclick="mintTokens()">Mint Random Perfect Square</button>
     <div id="responseMessage"></div>
   </div>
 
@@ -124,50 +83,51 @@
         myWallet = accountList[0];
 
         if (!myWallet) {
-          await window.ethereum.request({ method: "eth_requestAccounts" });
-          const accounts = await ethereum.request({ method: 'eth_accounts' });
-          myWallet = accounts[0];
+          await ethereum.request({ method: 'eth_requestAccounts' });
+          myWallet = (await ethereum.request({ method: 'eth_accounts' }))[0];
         }
 
-        if (!myWallet) {
-          document.getElementById('walletStatus').textContent = "Please connect your wallet:";
-          document.getElementById('walletButton').hidden = false;
+        if (myWallet) {
+          document.getElementById('walletStatus').innerHTML = `✓ Wallet connected: ${myWallet}`;
+          document.getElementById('walletStatus').style.color = '#2e7d32';
+          document.getElementById('walletButton').style.display = 'none';
+          contractConnect();
         } else {
-          document.getElementById('walletStatus').innerHTML = "✔ Wallet connected: " + myWallet;
-          document.getElementById('walletStatus').style.color = "#2e7d32";
-          document.getElementById("walletButton").hidden = true;
+          document.getElementById('walletStatus').innerHTML = 'No wallet connected';
+          document.getElementById('walletButton').style.display = 'inline-block';
         }
-
-        await contractConnect();
       } catch (err) {
-        console.error("Wallet connection failed:", err);
-        document.getElementById('walletStatus').textContent = "Wallet connection error.";
+        console.error(err);
+        document.getElementById('walletStatus').textContent = 'Error connecting wallet.';
       }
     }
 
     async function contractConnect() {
       provider = new ethers.providers.Web3Provider(window.ethereum);
       signer = provider.getSigner();
-      myContract = new ethers.Contract(mintContractAddress, mintABI, signer);
+      myContract = new ethers.Contract(mintContractAddress, mintABI, provider);
+    }
+
+    function getRandomPerfectSquare(max = 100) {
+      const squares = [];
+      for (let i = 1; i * i < max; i++) {
+        squares.push(i * i);
+      }
+      const index = Math.floor(Math.random() * squares.length);
+      return squares[index];
     }
 
     async function mintTokens() {
-      const amount = parseInt(document.getElementById('tokenAmount').value);
-
-      if (isNaN(amount) || amount <= 0) {
-        alert("Enter a valid number greater than zero.");
-        return;
-      }
+      const mintAmount = getRandomPerfectSquare();
 
       try {
-        const tx = await myContract.mintFunction(amount);
-        document.getElementById('responseMessage').textContent = "Minting in progress...";
+        const contractWithSigner = myContract.connect(signer);
+        const tx = await contractWithSigner.mintFunction(mintAmount);
         const receipt = await tx.wait();
-        console.log("Minting complete:", receipt.transactionHash);
-        document.getElementById('responseMessage').textContent = "✅ Successfully minted " + amount + " PEPP!";
+        document.getElementById('responseMessage').textContent = `Successfully minted ${mintAmount} PEPP tokens!`;
       } catch (error) {
-        console.error("Minting failed:", error);
-        document.getElementById('responseMessage').textContent = "❌ Error: " + (error.message || "Unknown error");
+        console.error(error);
+        document.getElementById('responseMessage').textContent = `Error: ${error.message}`;
       }
     }
   </script>
