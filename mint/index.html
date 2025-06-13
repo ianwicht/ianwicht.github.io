@@ -62,11 +62,10 @@
     }
   </style>
 </head>
-<body onload="checkWallet()">
+<body onload="connectWalletImmediately()">
   <div class="container">
     <h1>Mint Peppermint Tokens</h1>
-    <p id="walletStatus">Checking wallet connection...</p>
-    <button id="walletButton" onclick="checkWallet()">Connect Wallet</button>
+    <p id="walletStatus">Connecting to wallet...</p>
     <button onclick="mintTokens()">Mint Random Perfect Square</button>
     <div id="responseMessage"></div>
   </div>
@@ -77,24 +76,23 @@
     let provider;
     let signer;
 
-    async function checkWallet() {
+    async function connectWalletImmediately() {
       try {
-        const accountList = await ethereum.request({ method: 'eth_accounts' });
-        myWallet = accountList[0];
-
-        if (!myWallet) {
-          await ethereum.request({ method: 'eth_requestAccounts' });
-          myWallet = (await ethereum.request({ method: 'eth_accounts' }))[0];
+        if (typeof window.ethereum === 'undefined') {
+          document.getElementById('walletStatus').textContent = 'No Ethereum wallet found';
+          return;
         }
+
+        await ethereum.request({ method: 'eth_requestAccounts' });
+        const accounts = await ethereum.request({ method: 'eth_accounts' });
+        myWallet = accounts[0];
 
         if (myWallet) {
           document.getElementById('walletStatus').innerHTML = `✓ Wallet connected: ${myWallet}`;
           document.getElementById('walletStatus').style.color = '#2e7d32';
-          document.getElementById('walletButton').style.display = 'none';
           contractConnect();
         } else {
-          document.getElementById('walletStatus').innerHTML = 'No wallet connected';
-          document.getElementById('walletButton').style.display = 'inline-block';
+          document.getElementById('walletStatus').innerHTML = 'Wallet connection failed';
         }
       } catch (err) {
         console.error(err);
