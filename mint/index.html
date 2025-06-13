@@ -62,7 +62,7 @@
     }
   </style>
 </head>
-<body onload="connectWalletImmediately()">
+<body>
   <div class="container">
     <h1>Mint Peppermint Tokens</h1>
     <p id="walletStatus">Connecting to wallet...</p>
@@ -75,6 +75,9 @@
     let myContract;
     let provider;
     let signer;
+
+    // Connect wallet once DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', connectWalletImmediately);
 
     async function connectWalletImmediately() {
       try {
