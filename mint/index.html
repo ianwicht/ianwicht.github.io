@@ -1,113 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>My Token Minting Page</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        input, button {
-            margin-top: 10px;
-            padding: 10px;
-            font-size: 16px;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-    <script src="./mintABI.js" type="text/javascript"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.0/ethers.umd.min.js" type="application/javascript"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Token Minting Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset some default styles */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f7fa;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      background: #fff;
+      padding: 40px 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 16px;
+      color: #24a19c;
+      font-weight: 700;
+      font-size: 1.8rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 24px;
+      font-weight: 600;
+      font-size: 1rem;
+      color: #555;
+    }
+    button {
+      background-color: #24a19c;
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      box-shadow: 0 4px 12px rgba(36, 161, 156, 0.3);
+    }
+    button:hover {
+      background-color: #1c877f;
+      box-shadow: 0 6px 16px rgba(28, 135, 127, 0.5);
+    }
+    #walletInfo {
+      margin-top: 32px;
+      font-size: 0.95rem;
+      color: #444;
+      line-height: 1.4;
+    }
+    #walletStatus {
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    #walletButton {
+      margin-top: 8px;
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      background-color: #ff6b6b;
+      box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+    }
+    #walletButton:hover {
+      background-color: #e25555;
+      box-shadow: 0 6px 16px rgba(226, 85, 85, 0.6);
+    }
+    #responseMessage {
+      margin-top: 28px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #0077cc;
+      min-height: 1.5em;
+      word-break: break-word;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+  <script src="./mintABI.js" type="text/javascript"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.5.0/ethers.umd.min.js" type="application/javascript"></script>
 </head>
 <body onload="checkWallet()">
 
+  <div class="container">
     <h1>My Token Minting Page</h1>
-    <label for="tokenAmount">How many tokens to mint?</label><br>
-    <button onclick="mintTokens()">Mint</button>
+    <label>Mint a random amount of tokens (perfect square below 100)</label>
+    <button onclick="mintTokens()">Mint Tokens</button>
 
-    <!----->    
     <section id="walletInfo">
-        <br><br>
-        <b>Wallet connection: </b><br>
-        <span id="walletStatus" style="color:red">Checking for a wallet connection...</span>
-        <button onclick="checkWallet()" id="walletButton">Connect wallet</button>    
+      <div id="walletStatus" style="color:#ff0000;">Checking for a wallet connection...</div>
+      <button onclick="checkWallet()" id="walletButton">Connect Wallet</button>
     </section>
-    <!----->
 
-    <h3><span id="responseMessage" style="color:blue"></span></h3>
+    <div id="responseMessage"></div>
+  </div>
 
-    <script>
-        // These vars will be used in multiple functions.
-        var myWallet; 
-        var myContract; 
-        var provider;
-        var signer;
+  <script>
+    var myWallet; 
+    var myContract; 
+    var provider;
+    var signer;
 
-        async function checkWallet() {
-            // Get wallet addr
-            var accountList = await ethereum.request({ method: 'eth_accounts' });
-            myWallet = accountList[0];
-      
-            // If not connected to wallet, open wallet to connect
-            if (!myWallet) {
-                await window.ethereum.request({
-                    method: "eth_requestAccounts"
-                });
+    async function checkWallet() {
+      var accountList = await ethereum.request({ method: 'eth_accounts' });
+      myWallet = accountList[0];
 
-                // Reload wallet address
-                accountList = await ethereum.request({ method: 'eth_accounts' });
-                myWallet = accountList[0];
-            }
+      if (!myWallet) {
+        await window.ethereum.request({ method: "eth_requestAccounts" });
+        accountList = await ethereum.request({ method: 'eth_accounts' });
+        myWallet = accountList[0];
+      }
 
-            // Test again: If not connected to wallet, show a button to allow wallet connection.
-            if (!myWallet) {
-                document.getElementById('walletStatus').innerHTML = "Click here to connect a crypto wallet: ";
-                document.getElementById('walletButton').hidden = false;
-            } else {
-                document.getElementById('walletStatus').innerHTML = " &#x2713; Your crypto wallet is connected. <br>";
-                document.getElementById('walletStatus').style.color = "#0000FF";
-                document.getElementById("walletButton").hidden = true;
-            }
-            
-            contractConnect();   
-        }
+      if (!myWallet) {
+        document.getElementById('walletStatus').innerHTML = "Click below to connect your crypto wallet";
+        document.getElementById('walletStatus').style.color = "#ff0000";
+        document.getElementById('walletButton').hidden = false;
+      } else {
+        document.getElementById('walletStatus').innerHTML = "&#x2713; Wallet connected: " + myWallet;
+        document.getElementById('walletStatus').style.color = "#24a19c";
+        document.getElementById('walletButton').hidden = true;
+      }
 
-        async function contractConnect() {
-            await window.ethereum.request({ method: 'eth_requestAccounts' });
-            provider = new ethers.providers.Web3Provider(window.ethereum);
-            myContract = new ethers.Contract(mintContractAddress, mintABI, provider);
-            signer = provider.getSigner();
+      await contractConnect();
+    }
 
-            // Test the connection by calling data from the contract
-            var supply = await myContract.totalSupply();
-            console.log("supply="+supply+" tokenAddr:"+mintContractAddress); 
-        }
+    async function contractConnect() {
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+      provider = new ethers.providers.Web3Provider(window.ethereum);
+      myContract = new ethers.Contract(mintContractAddress, mintABI, provider);
+      signer = provider.getSigner();
 
-        function getRandomPerfectSquare(max = 100) {
-            const squares = [];
-            for (let i = 1; i * i < max; i++) {
-                squares.push(i * i);
-            }
-            const index = Math.floor(Math.random() * squares.length);
-            return squares[index];
-        }
+      try {
+        let supply = await myContract.totalSupply();
+        console.log("Token supply: " + supply + " Contract address: " + mintContractAddress);
+      } catch(e) {
+        console.error("Error fetching total supply:", e);
+      }
+    }
 
-        async function mintTokens() {
-            var mintAmount = getRandomPerfectSquare();
+    function getRandomPerfectSquare(max = 100) {
+      const squares = [];
+      for (let i = 1; i * i < max; i++) {
+        squares.push(i * i);
+      }
+      const index = Math.floor(Math.random() * squares.length);
+      return squares[index];
+    }
 
-            try {
-                const contractWithSigner = myContract.connect(signer);
-                const tx = await contractWithSigner.mintFunction(mintAmount);
-                const receipt = await tx.wait();
-                console.log(`Transaction successful with hash: ${receipt.transactionHash}`);
-                document.getElementById('responseMessage').innerHTML = `Successfully minted ${mintAmount} tokens.`;
-            } catch (error) {
-                console.error("Error calling mintFunction:", error);
-                document.getElementById('responseMessage').innerHTML = `Error: ${error.message}`;
-            }
-        }
-    </script>
+    async function mintTokens() {
+      if (!myContract || !signer) {
+        document.getElementById('responseMessage').innerText = "Please connect your wallet first.";
+        return;
+      }
+
+      const mintAmount = getRandomPerfectSquare();
+
+      try {
+        const contractWithSigner = myContract.connect(signer);
+        const tx = await contractWithSigner.mintFunction(mintAmount);
+        const receipt = await tx.wait();
+        document.getElementById('responseMessage').innerText = `Successfully minted ${mintAmount} tokens!`;
+        console.log(`Transaction successful: ${receipt.transactionHash}`);
+      } catch (error) {
+        console.error("Mint error:", error);
+        document.getElementById('responseMessage').innerText = `Error: ${error.message}`;
+      }
+    }
+  </script>
 
 </body>
 </html>
